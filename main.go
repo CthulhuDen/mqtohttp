@@ -19,12 +19,14 @@ import (
 	"github.com/eclipse/paho.golang/paho"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/urfave/cli/v3"
+
+	"mqtohtml/rules"
 )
 
 func main() {
 	cmd := cli.Command{
 		Name:    "mqtohttp",
-		Version: "v0.1.0",
+		Version: "v0.1.1-alpha",
 		Usage:   "Helper to translate MQTT messages into HTTP requests",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -76,6 +78,12 @@ func main() {
 				Sources:  cli.EnvVars("HTTP_ENDPOINT"),
 				Required: true,
 			},
+			&cli.StringSliceFlag{
+				Name:    "rule",
+				Aliases: []string{"r"},
+				Usage:   "Rules to apply to topic, can be specified multiple times. Every rule starts with optional regex, filled by -> and action (ignore or send)",
+				Sources: cli.EnvVars("RULES"),
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			clientId, err := getClientId(cmd.String("mqtt-session-file"))
@@ -86,6 +94,11 @@ func main() {
 			u, err := url.Parse(cmd.String("mqtt-endpoint"))
 			if err != nil {
 				return fmt.Errorf("parsing MQTT connect url: %w", err)
+			}
+
+			rs, err := rules.ParseRules(cmd.StringSlice("rule"))
+			if err != nil {
+				return fmt.Errorf("parsing rules: %w", err)
 			}
 
 			httpEndpoint := cmd.String("http-endpoint")
@@ -131,7 +144,7 @@ func main() {
 					EnableManualAcknowledgment: true,
 					OnPublishReceived: []func(paho.PublishReceived) (bool, error){
 						func(pr paho.PublishReceived) (bool, error) {
-							res, err := handleMessage(ctx, pr.Packet, httpEndpoint)
+							res, err := handleMessage(ctx, pr.Packet, rs, httpEndpoint)
 							if err == nil {
 								log.Printf("handled message on %s: %s\n", pr.Packet.Topic, res)
 
@@ -189,20 +202,31 @@ func main() {
 	}
 }
 
-func handleMessage(ctx context.Context, p *paho.Publish, endpoint string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(p.Payload)))
-	if err != nil {
-		return "", fmt.Errorf("creating request: %w", err)
+func handleMessage(ctx context.Context, p *paho.Publish, rs rules.Rules, endpoint string) (string, error) {
+	a, r := rs.Apply(p.Topic)
+	switch a {
+	case rules.ActionIgnore:
+		return "ignored", nil
+	case rules.ActionSend:
+		if r != nil {
+			endpoint = r.Replace(endpoint)
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(p.Payload)))
+		if err != nil {
+			return "", fmt.Errorf("creating request: %w", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return "", err
+		}
+
+		return fmt.Sprintf("sent to %s (response code %d)", req.URL, resp.StatusCode), nil
+	default:
+		return "", fmt.Errorf("unknown action: %s", a)
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("sent to %s (response code %d)", req.URL, resp.StatusCode), nil
 }
 
 func getClientId(file string) (string, error) {
