@@ -31,16 +31,16 @@ go build -o mqtohttp
 
 The service can be configured using environment variables:
 
-| Environment Variable | Required | Default                                            | Description |
-|---------------------|----------|----------------------------------------------------|-------------|
-| MQTT_ENDPOINT | Yes | -                                                  | MQTT server endpoint (e.g., `wss://mqtt.example.com`) |
-| MQTT_USER | No | -                                                  | Username for MQTT authentication |
-| MQTT_PASSWORD | No | -                                                  | Password for MQTT authentication |
-| MQTT_SESSION_FILE | No | `session-id.txt` / `/data/session-id.txt` (docker) | File to store MQTT session ID |
-| MQTT_KEEPALIVE | No | 20                                                 | Keepalive period in seconds |
-| MQTT_SESSION_EXPIRY | No | 604800                                             | Session expiry in seconds (default 7 days) |
-| MQTT_TOPICS | Yes | -                                                  | MQTT topics to subscribe to (comma-separated) |
-| HTTP_ENDPOINT | Yes | -                                                  | HTTP endpoint to forward messages to |
+| Environment Variable | Required | Default                                            | Description                                           |
+|----------------------|----------|----------------------------------------------------|-------------------------------------------------------|
+| MQTT_ENDPOINT        | Yes      | -                                                  | MQTT server endpoint (e.g., `wss://mqtt.example.com`) |
+| MQTT_USER            | No       | -                                                  | Username for MQTT authentication                      |
+| MQTT_PASSWORD        | No       | -                                                  | Password for MQTT authentication                      |
+| MQTT_SESSION_FILE    | No       | `session-id.txt` / `/data/session-id.txt` (docker) | File to store MQTT session ID                         |
+| MQTT_KEEPALIVE       | No       | 20                                                 | Keepalive period in seconds                           |
+| MQTT_SESSION_EXPIRY  | No       | 604800                                             | Session expiry in seconds (default 7 days)            |
+| MQTT_TOPICS          | Yes      | -                                                  | MQTT topics to subscribe to (comma-separated)         |
+| HTTP_ENDPOINT        | Yes      | -                                                  | HTTP endpoint to forward messages to                  |
 
 ## Usage Examples
 
@@ -111,4 +111,3 @@ MIT License
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-```
