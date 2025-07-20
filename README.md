@@ -47,7 +47,7 @@ The service can be configured using environment variables:
 ### Basic Example with Environment Variables
 
 ```bash
-export MQTT_ENDPOINT=wss://mqtt.example.com
+export MQTT_ENDPOINT=ws://mqtt.example.com
 export MQTT_TOPICS=sensors/#,home/#
 export HTTP_ENDPOINT=http://localhost:3000/api/webhook
 ./mqtohttp
@@ -59,9 +59,9 @@ export HTTP_ENDPOINT=http://localhost:3000/api/webhook
 docker run -d \
   -e MQTT_ENDPOINT=wss://mqtt.example.com \
   -e MQTT_TOPICS=sensors/# \
-  -e HTTP_ENDPOINT=http://api.example.com/webhook \
+  -e HTTP_ENDPOINT=https://api.example.com/webhook \
   -v mqtt_data:/data \
-  ghcr.io/yourusername/mqtohttp:0.1
+  ghcr.io/cthulhuden/mqtohttp:0.1
 ```
 
 ### Docker Compose configuration
@@ -69,7 +69,7 @@ docker run -d \
 ```yaml
 services:
   mqtohttp:
-    image: ghcr.io/yourusername/mqtohttp:0.1
+    image: ghcr.io/cthulhuden/mqtohttp:0.1
     environment:
       - MQTT_ENDPOINT=wss://mqtt.example.com
       - MQTT_USER=your_username
